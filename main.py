@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import filedialog
 import os
+from PyPDF2 import PdfReader
 
 window = Tk()
 entryWord = StringVar()
@@ -48,7 +49,7 @@ def openFile(evt):
     selectedFile = str(filesList.get(indexSelectedFile))
 
     if selectedFile != None and selectedFile != "":
-        os.system(selectedFile)
+        os.system(f"\"{selectedFile}\"")
 
 def selectDirectory():
     newSelectedDirectory = str(filedialog.askdirectory())
@@ -76,16 +77,31 @@ def searchFiles(directory: str):
             searchWord(newRoute)
 
 def searchWord(route: str):
-    f = open(route, "r")
+    f = open(route, "rb")
 
     try:
-        if f.readable():
-            for x in f:
-                if entryWord.get() in x:
+        if not route.endswith(".pdf"):
+            for b in f:
+                try:
+                    line = b.decode('UTF-8')
+                    if entryWord.get() in line:
+                        filesList.insert(0, route)
+                        break
+                except Exception:
+                    pass
+        else:
+            pdfReader = PdfReader(f)
+            
+            for page in pdfReader.pages:
+                if entryWord.get() in page.extract_text():
                     filesList.insert(0, route)
                     break
     except Exception:
         pass
+
+    f.close()
+
+    
     
 
 if __name__ == "__main__":
